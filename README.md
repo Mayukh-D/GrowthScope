@@ -109,6 +109,12 @@ export GEMINI_API_KEY="your key from https://aistudio.google.com/apikey"
 export SESSION_SECRET="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
 ```
 
+### Deploy
+
+The repository includes a [Render](https://render.com) blueprint ([`render.yaml`](render.yaml)): in Render choose **New → Blueprint**, pick this repository, and it builds and runs the app under gunicorn with a health check at `/healthz`. Render generates `SESSION_SECRET`; add `GEMINI_API_KEY` only if you want the AI chat. On the free plan the app sleeps when idle, so the first visit takes up to a minute.
+
+Any host works the same way: `gunicorn main:app --workers 2 --bind 0.0.0.0:$PORT`, with `SESSION_SECRET` set to a fixed random value. Without it each worker signs sessions differently and people get logged out between requests.
+
 ### Data format
 
 One row per line item. Required: a **date**, **product**, **quantity**, **selling price** and **cost price**. Optional: **receipt ID** (unlocks per-order metrics), **brand**, **category**, and **stock on hand** (enables the inventory page). Common header variants are recognised; the canonical names are:

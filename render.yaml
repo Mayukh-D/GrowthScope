@@ -1,0 +1,18 @@
+# Render Blueprint: New -> Blueprint -> pick this repository.
+services:
+  - type: web
+    name: growthscope
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # Two workers share one machine's temp folder, so uploads are visible to
+    # both; SESSION_SECRET keeps their session cookies compatible.
+    startCommand: gunicorn main:app --workers 2 --bind 0.0.0.0:$PORT --timeout 60
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false   # optional: Render asks for it; leave blank to run without AI chat

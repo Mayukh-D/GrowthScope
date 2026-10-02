@@ -35,17 +35,27 @@ if missing:
 print(f'{len(local)} local links ok')
 PYCHECK
 
-step "boot (no API key, production settings)"
-env -u GEMINI_API_KEY -u FLASK_DEBUG PORT="$PORT" "$PY" main.py >/tmp/growthscope-check.log 2>&1 &
+step "boot under gunicorn, as deployed (2 workers, no API key)"
+COOKIES=$(mktemp)
+env -u GEMINI_API_KEY -u FLASK_DEBUG -u GROWTHSCOPE_DEBUG_ROUTES SESSION_SECRET=check-secret \
+  "$(dirname "$PY")/gunicorn" main:app --workers 2 --bind "127.0.0.1:$PORT" >/tmp/growthscope-check.log 2>&1 &
 APP=$!
-trap 'kill $APP 2>/dev/null || true' EXIT
-for _ in $(seq 1 30); do
-  code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/login" || true)
+trap 'kill $APP 2>/dev/null || true; rm -f "$COOKIES"' EXIT
+for _ in $(seq 1 40); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/healthz" || true)
   [ "$code" = 200 ] && break
   sleep 0.5
 done
-[ "$code" = 200 ] || { echo "app did not serve /login (got $code)"; cat /tmp/growthscope-check.log; exit 1; }
-grep -q 'Debug mode: off' /tmp/growthscope-check.log || { echo "debug mode is on"; exit 1; }
-echo "serves /login, debug off"
+[ "$code" = 200 ] || { echo "/healthz did not answer (got $code)"; cat /tmp/growthscope-check.log; exit 1; }
+curl -s -c "$COOKIES" -o /dev/null -d 'username=check&password=check' "http://127.0.0.1:$PORT/login"
+curl -s -b "$COOKIES" -c "$COOKIES" -o /dev/null -d 'demo_type=synthetic_sales_100&date_filter=all' "http://127.0.0.1:$PORT/load-demo-data"
+# Twenty requests land on both workers; each must still see the session.
+for _ in $(seq 1 20); do
+  code=$(curl -s -b "$COOKIES" -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/dashboard/executive")
+  [ "$code" = 200 ] || { echo "dashboard returned $code: session lost between workers?"; exit 1; }
+done
+[ "$(curl -s -b "$COOKIES" -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/debug/session")" = 404 ] \
+  || { echo "debug routes are exposed"; exit 1; }
+echo "healthz ok, session holds across 20 requests on 2 workers, debug routes hidden"
 
 printf '\nAll checks passed.\n'

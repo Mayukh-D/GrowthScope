@@ -31,6 +31,10 @@ app = Flask(__name__)
 # A fixed fallback would let anyone forge session cookies, so without a
 # configured secret each run gets a random one (sessions reset on restart).
 app.secret_key = os.environ.get('SESSION_SECRET') or secrets.token_hex(32)
+if not os.environ.get('SESSION_SECRET'):
+    # Fine for one local process. Under gunicorn every worker would pick a
+    # different secret and sign people out at random, so deployments set it.
+    print("WARNING: SESSION_SECRET is not set; sessions will not survive restarts or span workers.")
 
 @app.template_filter('money')
 def money(value, decimals=0):
@@ -51,8 +55,8 @@ def number(value):
 
 @app.before_request
 def require_login_first():
-    # Allow login route and static files without session
-    if request.endpoint in ('login', 'static'):
+    # Allow login, static files and the health check without a session
+    if request.endpoint in ('login', 'static', 'healthz'):
         return
     if request.path.startswith('/static/'):
         return
@@ -782,6 +786,12 @@ def analyze_inventory_data(df):
 
 
 # Routes
+@app.route('/healthz')
+def healthz():
+    """For the host's health checks: no login, no data, just 'running'."""
+    return 'ok', 200
+
+
 @app.route('/')
 def root():
     # "Upload New Data" links here; send signed-in users to the upload page

@@ -110,3 +110,9 @@ def test_chat_without_a_key_explains_how_to_enable_it(client):
     client.post('/load-demo-data', data={'demo_type': 'supermarket_data', 'date_filter': 'all'})
     answer = client.post('/dashboard/chat/ask', json={'question': 'Top products?'}).get_json()['answer']
     assert 'GEMINI_API_KEY' in answer
+
+
+def test_health_check_needs_no_login():
+    with main.app.test_client() as c:
+        r = c.get('/healthz')
+        assert r.status_code == 200 and r.get_data(as_text=True) == 'ok'
