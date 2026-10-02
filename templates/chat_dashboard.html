@@ -310,10 +310,27 @@
             background: rgba(255,255,255,0.3);
         }
 
+        .hamburger { display: none; flex-direction: column; cursor: pointer; z-index: 1001; }
+        .hamburger span { width: 25px; height: 3px; background: white; margin: 3px 0; transition: 0.3s; border-radius: 2px; }
+        .hamburger.active span:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
+        .nav-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999;
+                       opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .nav-overlay.active { opacity: 1; visibility: visible; }
+
         @media (max-width: 768px) {
+            /* Same slide-out menu as the other dashboards; it used to be
+               hidden outright, leaving no way off this page on a phone. */
+            .hamburger { display: flex; }
             .nav-menu {
-                display: none;
+                position: fixed; top: 0; left: -100%; width: 80%; max-width: 300px; height: 100vh;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                flex-direction: column; justify-content: flex-start; align-items: flex-start;
+                padding: 80px 20px 20px; transition: left 0.3s ease; z-index: 1000; gap: 10px;
             }
+            .nav-menu.active { left: 0; }
+            .nav-item, .nav-upload { width: 100%; text-align: left; padding: 15px 20px; border-radius: 8px; font-size: 16px; }
 
             .chat-container {
                 grid-template-columns: 1fr;
@@ -325,8 +342,7 @@
             }
 
             .nav-container {
-                flex-direction: column;
-                gap: 15px;
+                padding: 0 20px;
             }
 
             .message {
@@ -387,7 +403,12 @@
                 </div>
                 GrowthScope
             </div>
-            <div class="nav-menu">
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="nav-menu" id="navMenu">
                 <a href="/dashboard/executive" class="nav-item">Executive</a>
                 <a href="/dashboard/financial" class="nav-item">Financial</a>
                 <a href="/dashboard/growth" class="nav-item">Growth</a>
@@ -398,6 +419,7 @@
             </div>
         </div>
     </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
 
     <div class="container">
         <!-- Page Header -->
@@ -592,6 +614,23 @@
                 sendMessage();
             }
         });
+    </script>
+
+    <script>
+        // Mobile menu, as on the other dashboards
+        (function () {
+            const hamburger = document.getElementById('hamburger');
+            const navMenu = document.getElementById('navMenu');
+            const navOverlay = document.getElementById('navOverlay');
+            function toggleMenu() {
+                hamburger.classList.toggle('active');
+                navMenu.classList.toggle('active');
+                navOverlay.classList.toggle('active');
+                document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+            }
+            hamburger.addEventListener('click', toggleMenu);
+            navOverlay.addEventListener('click', toggleMenu);
+        })();
     </script>
 </body>
 </html>

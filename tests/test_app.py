@@ -90,3 +90,17 @@ def test_chat_overview_counts_products(client):
 
 def test_market_trends_says_its_data_is_illustrative(client):
     assert 'Illustrative sample data' in _page(client, 'trends')
+
+
+def test_upload_new_data_link_goes_to_upload_when_signed_in(client):
+    assert client.get('/').headers['Location'] == '/home'
+
+
+def test_root_sends_visitors_to_login():
+    with main.app.test_client() as c:
+        assert c.get('/').headers['Location'].startswith('/login')
+
+
+def test_chat_has_the_mobile_menu(client):
+    page = _page(client, 'chat')
+    assert 'id="hamburger"' in page and 'id="navOverlay"' in page

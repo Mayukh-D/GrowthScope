@@ -784,7 +784,9 @@ def analyze_inventory_data(df):
 # Routes
 @app.route('/')
 def root():
-    return redirect(url_for('login'))
+    # "Upload New Data" links here; send signed-in users to the upload page
+    # instead of back to the login form.
+    return redirect(url_for('index') if session.get('logged_in') else url_for('login'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
