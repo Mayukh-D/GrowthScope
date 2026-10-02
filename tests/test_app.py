@@ -57,3 +57,9 @@ def test_login_only_redirects_within_the_app(target, expected):
     with main.app.test_client() as c:
         r = c.post('/login?next=' + target, data={'username': 'demo', 'password': 'demo'})
         assert r.headers['Location'] == expected
+
+
+def test_money_filter_adds_thousands_separators():
+    assert main.money(76369.4) == '76,369'
+    assert main.money(1234.5, 2) == '1,234.50'
+    assert main.money('n/a') == 'n/a'

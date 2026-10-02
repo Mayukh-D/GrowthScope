@@ -32,6 +32,15 @@ app = Flask(__name__)
 # configured secret each run gets a random one (sessions reset on restart).
 app.secret_key = os.environ.get('SESSION_SECRET') or secrets.token_hex(32)
 
+@app.template_filter('money')
+def money(value, decimals=0):
+    """1234567.8 -> 1,234,568 (the $ is in the template)."""
+    try:
+        return f"{float(value):,.{int(decimals)}f}"
+    except (TypeError, ValueError):
+        return value
+
+
 # Force login for all routes except /login and static
 
 @app.before_request

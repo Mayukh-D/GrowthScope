@@ -286,7 +286,7 @@
             </div>
 
             <div class="inventory-card">
-                <div class="inventory-value">${{ "%.0f"|format(inventory_data.total_stock_value) if inventory_data else 0 }}</div>
+                <div class="inventory-value">${{ (inventory_data.total_stock_value)|money(0) if inventory_data else 0 }}</div>
                 <div class="inventory-label">Total Stock Value</div>
                 <div class="inventory-insight">Inventory worth</div>
             </div>

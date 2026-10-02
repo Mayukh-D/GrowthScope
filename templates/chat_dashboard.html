@@ -470,11 +470,11 @@
                     <h4 class="sidebar-title">Data Overview</h4>
                     <div class="summary-item">
                         <span class="summary-label">Total Revenue</span>
-                        <span class="summary-value">${{ "%.0f"|format(insights.total_sales) }}</span>
+                        <span class="summary-value">${{ (insights.total_sales)|money(0) }}</span>
                     </div>
                     <div class="summary-item">
                         <span class="summary-label">Total Profit</span>
-                        <span class="summary-value">${{ "%.0f"|format(insights.total_profit) }}</span>
+                        <span class="summary-value">${{ (insights.total_profit)|money(0) }}</span>
                     </div>
                     <div class="summary-item">
                         <span class="summary-label">Profit Margin</span>

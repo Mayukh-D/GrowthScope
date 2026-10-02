@@ -166,16 +166,16 @@
                 <h3 class="financial-title">Profit Analysis</h3>
                 <div class="profit-tier">
                     <span class="tier-label">Total Revenue</span>
-                    <span class="tier-count">${{ "%.0f"|format(insights.total_sales) }}</span>
+                    <span class="tier-count">${{ (insights.total_sales)|money(0) }}</span>
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Total Costs</span>
-                    <span class="tier-count">${{ "%.0f"|format(insights.total_cost) }}</span>
+                    <span class="tier-count">${{ (insights.total_cost)|money(0) }}</span>
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Net Profit</span>
                     <span class="tier-count {% if insights.total_profit > 0 %}positive{% else %}negative{% endif %}">
-                        ${{ "%.0f"|format(insights.total_profit) }}
+                        ${{ (insights.total_profit)|money(0) }}
                     </span>
                 </div>
                 <div class="profit-tier">
@@ -191,11 +191,11 @@
                 <h3 class="financial-title">Transaction Economics</h3>
                 <div class="profit-tier">
                     <span class="tier-label">Avg Transaction Value</span>
-                    <span class="tier-count">${{ "%.2f"|format(insights.transaction_metrics.avg_receipt_value) }}</span>
+                    <span class="tier-count">${{ (insights.transaction_metrics.avg_receipt_value)|money(2) }}</span>
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Avg Transaction Profit</span>
-                    <span class="tier-count positive">${{ "%.2f"|format(insights.transaction_metrics.avg_receipt_profit) }}</span>
+                    <span class="tier-count positive">${{ (insights.transaction_metrics.avg_receipt_profit)|money(2) }}</span>
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Transaction Profit Margin</span>
@@ -217,15 +217,15 @@
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Cost per Item</span>
-                    <span class="tier-count">${{ "%.2f"|format((insights.total_cost/insights.total_quantity) if insights.total_quantity > 0 else 0) }}</span>
+                    <span class="tier-count">${{ ((insights.total_cost/insights.total_quantity) if insights.total_quantity > 0 else 0)|money(2) }}</span>
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Revenue per Item</span>
-                    <span class="tier-count">${{ "%.2f"|format(insights.avg_revenue_per_item) }}</span>
+                    <span class="tier-count">${{ (insights.avg_revenue_per_item)|money(2) }}</span>
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Profit per Item</span>
-                    <span class="tier-count positive">${{ "%.2f"|format((insights.total_profit/insights.total_quantity) if insights.total_quantity > 0 else 0) }}</span>
+                    <span class="tier-count positive">${{ ((insights.total_profit/insights.total_quantity) if insights.total_quantity > 0 else 0)|money(2) }}</span>
                 </div>
             </div>
             {% endif %}
@@ -297,7 +297,7 @@
                         <div class="brand-name">{{ brand }}</div>
                         <div class="brand-metrics">
                             <div class="brand-metric">
-                                <div class="brand-value">${{ "%.0f"|format(data.Revenue) }}</div>
+                                <div class="brand-value">${{ (data.Revenue)|money(0) }}</div>
                                 <div class="brand-label">Revenue</div>
                             </div>
                             <div class="brand-metric">
@@ -305,7 +305,7 @@
                                 <div class="brand-label">Margin</div>
                             </div>
                             <div class="brand-metric">
-                                <div class="brand-value">${{ "%.0f"|format(data.Profit) }}</div>
+                                <div class="brand-value">${{ (data.Profit)|money(0) }}</div>
                                 <div class="brand-label">Profit</div>
                             </div>
                             <div class="brand-metric">
@@ -338,10 +338,10 @@
                     {% for product in insights.product_aggregates[:10] %}
                     <tr>
                         <td><strong>{{ product.Product }}</strong></td>
-                        <td>${{ "%.0f"|format(product.Revenue) }}</td>
-                        <td>${{ "%.0f"|format(product.Cost) }}</td>
+                        <td>${{ (product.Revenue)|money(0) }}</td>
+                        <td>${{ (product.Cost)|money(0) }}</td>
                         <td class="{% if product.Profit > 0 %}positive{% else %}negative{% endif %}">
-                            ${{ "%.0f"|format(product.Profit) }}
+                            ${{ (product.Profit)|money(0) }}
                         </td>
                         <td class="{% if product.Margin_Pct > 0 %}positive{% else %}negative{% endif %}">
                             {{ "%.1f"|format(product.Margin_Pct) }}%

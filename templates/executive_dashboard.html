@@ -566,13 +566,13 @@
         {% if insights %}
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.total_sales) }}</div>
+                <div class="kpi-value">${{ (insights.total_sales)|money(0) }}</div>
                 <div class="kpi-label">Total Revenue</div>
                 <div class="kpi-change positive">📈 Primary metric</div>
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.total_profit) }}</div>
+                <div class="kpi-value">${{ (insights.total_profit)|money(0) }}</div>
                 <div class="kpi-label">Total Profit</div>
                 <div class="kpi-change {% if insights.profit_margin >= 20 %}positive{% else %}negative{% endif %}">
                     {{ "%.1f"|format(insights.profit_margin) }}% margin
@@ -587,7 +587,7 @@
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.transaction_metrics.avg_receipt_value) }}</div>
+                <div class="kpi-value">${{ (insights.transaction_metrics.avg_receipt_value)|money(0) }}</div>
                 <div class="kpi-label">Avg Transaction Value</div>
                 <div class="kpi-change positive">💰 Per receipt</div>
             </div>
@@ -599,7 +599,7 @@
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.transaction_metrics.largest_receipt) }}</div>
+                <div class="kpi-value">${{ (insights.transaction_metrics.largest_receipt)|money(0) }}</div>
                 <div class="kpi-label">Largest Transaction</div>
                 <div class="kpi-change positive">🏆 Peak order</div>
             </div>
@@ -611,7 +611,7 @@
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-value">${{ "%.0f"|format(insights.avg_revenue_per_item) }}</div>
+                <div class="kpi-value">${{ (insights.avg_revenue_per_item)|money(0) }}</div>
                 <div class="kpi-label">Avg Revenue/Item</div>
                 <div class="kpi-change positive">💰 Per unit value</div>
             </div>
@@ -679,7 +679,7 @@
             <h3 class="insight-title">📊 Key Business Insights</h3>
             <ul class="insight-list">
                 <li class="insight-item">
-                    <strong>Top Performer:</strong> {{ insights.top_selling_product }} generated ${{ "%.0f"|format(insights.top_product_revenue) }} in revenue
+                    <strong>Top Performer:</strong> {{ insights.top_selling_product }} generated ${{ (insights.top_product_revenue)|money(0) }} in revenue
                 </li>
                 <li class="insight-item">
                     <strong>Profit Health:</strong>
@@ -694,7 +694,7 @@
                     {% endif %}
                 </li>
                 <li class="insight-item">
-                    <strong>Sales Volume:</strong> {{ insights.total_quantity }} units sold with average value of ${{ "%.0f"|format(insights.avg_revenue_per_item) }} per item
+                    <strong>Sales Volume:</strong> {{ insights.total_quantity }} units sold with average value of ${{ (insights.avg_revenue_per_item)|money(0) }} per item
                 </li>
                 {% if insights.brand_summary|length > 1 %}
                 <li class="insight-item">

@@ -500,11 +500,11 @@
                         <h2 class="card-title">📊 Sales Analytics</h2>
                         <div class="insights-grid">
                             <div class="insight-item">
-                                <div class="insight-value">${{ "%.2f"|format(insights.total_sales) }}</div>
+                                <div class="insight-value">${{ (insights.total_sales)|money(2) }}</div>
                                 <div class="insight-label">Total Sales</div>
                             </div>
                             <div class="insight-item">
-                                <div class="insight-value">${{ "%.2f"|format(insights.total_profit) }}</div>
+                                <div class="insight-value">${{ (insights.total_profit)|money(2) }}</div>
                                 <div class="insight-label">Total Profit</div>
                             </div>
                             <div class="insight-item">
@@ -520,7 +520,7 @@
                                 <div class="insight-label">Items Sold</div>
                             </div>
                             <div class="insight-item">
-                                <div class="insight-value">${{ "%.2f"|format(insights.avg_revenue_per_item) }}</div>
+                                <div class="insight-value">${{ (insights.avg_revenue_per_item)|money(2) }}</div>
                                 <div class="insight-label">Avg Revenue/Item</div>
                             </div>
                         </div>
@@ -535,7 +535,7 @@
                                     {% if brand != 'Unknown' %}
                                         <div class="insight-item">
                                             <div class="insight-value">{{ brand }}</div>
-                                            <div class="insight-label">${{ "%.0f"|format(data.Revenue) }} | {{ "%.1f"|format(data.Margin) }}% margin</div>
+                                            <div class="insight-label">${{ (data.Revenue)|money(0) }} | {{ "%.1f"|format(data.Margin) }}% margin</div>
                                         </div>
                                     {% endif %}
                                 {% endfor %}
@@ -552,7 +552,7 @@
                                     {% if category != 'Unknown' %}
                                         <div class="insight-item">
                                             <div class="insight-value">{{ category }}</div>
-                                            <div class="insight-label">${{ "%.0f"|format(data.Revenue) }} | {{ "%.1f"|format(data.Margin) }}% margin</div>
+                                            <div class="insight-label">${{ (data.Revenue)|money(0) }} | {{ "%.1f"|format(data.Margin) }}% margin</div>
                                         </div>
                                     {% endif %}
                                 {% endfor %}
@@ -572,7 +572,7 @@
                                         <div style="margin-bottom: 15px;">
                                             <strong>{{ category }}:</strong>
                                             {% for product in products %}
-                                                <span style="margin-left: 10px;">{{ product.Product }} (${{ "%.0f"|format(product.Profit) }})</span>
+                                                <span style="margin-left: 10px;">{{ product.Product }} (${{ (product.Profit)|money(0) }})</span>
                                             {% endfor %}
                                         </div>
                                     {% endif %}
@@ -586,7 +586,7 @@
                                         <div style="margin-bottom: 15px;">
                                             <strong>{{ brand }}:</strong>
                                             {% for product in products %}
-                                                <span style="margin-left: 10px;">{{ product.Product }} (${{ "%.0f"|format(product.Profit) }})</span>
+                                                <span style="margin-left: 10px;">{{ product.Product }} (${{ (product.Profit)|money(0) }})</span>
                                             {% endfor %}
                                         </div>
                                     {% endif %}
@@ -612,7 +612,7 @@
                                         </h3>
                                         {% for product in products[:5] %}
                                             <div style="margin-left: 15px; margin-bottom: 5px;">
-                                                {{ product.product }}: {{ "%.1f"|format(product.margin) }}% margin, ${{ "%.0f"|format(product.profit) }} profit
+                                                {{ product.product }}: {{ "%.1f"|format(product.margin) }}% margin, ${{ (product.profit)|money(0) }} profit
                                             </div>
                                         {% endfor %}
                                     </div>

@@ -417,7 +417,7 @@
             </div>
 
             <div class="growth-card">
-                <div class="growth-value">${{ "%.0f"|format((insights.total_sales / insights.date_summary.unique_dates) if insights.date_summary.unique_dates > 0 else 0) }}</div>
+                <div class="growth-value">${{ ((insights.total_sales / insights.date_summary.unique_dates) if insights.date_summary.unique_dates > 0 else 0)|money(0) }}</div>
                 <div class="growth-label">Daily Average Revenue</div>
                 <div class="growth-insight">Average sales per day</div>
             </div>
@@ -448,7 +448,7 @@
                     {% for product in top_products[:5] %}
                     <li class="opportunity-item">
                         <span class="opportunity-label">{{ product.Product }}</span>
-                        <span class="opportunity-value">${{ "%.0f"|format(product.Profit) }}</span>
+                        <span class="opportunity-value">${{ (product.Profit)|money(0) }}</span>
                     </li>
                     {% endfor %}
                 </ul>
@@ -471,7 +471,7 @@
                     {% endif %}
                     <li class="opportunity-item">
                         <span class="opportunity-label">Average Order Value</span>
-                        <span class="opportunity-value">${{ "%.0f"|format(insights.avg_revenue_per_item) }}</span>
+                        <span class="opportunity-value">${{ (insights.avg_revenue_per_item)|money(0) }}</span>
                     </li>
                     <li class="opportunity-item">
                         <span class="opportunity-label">Market Coverage</span>
