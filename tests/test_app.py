@@ -104,3 +104,9 @@ def test_root_sends_visitors_to_login():
 def test_chat_has_the_mobile_menu(client):
     page = _page(client, 'chat')
     assert 'id="hamburger"' in page and 'id="navOverlay"' in page
+
+
+def test_chat_without_a_key_explains_how_to_enable_it(client):
+    client.post('/load-demo-data', data={'demo_type': 'supermarket_data', 'date_filter': 'all'})
+    answer = client.post('/dashboard/chat/ask', json={'question': 'Top products?'}).get_json()['answer']
+    assert 'GEMINI_API_KEY' in answer

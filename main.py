@@ -597,7 +597,7 @@ Transaction Analytics:
 def ask_ai_about_data(question, insights):
     """Use Gemini AI to answer questions about the business data"""
     if not gemini_client:
-        return "AI service is not available. Please check your API configuration."
+        return "The AI assistant is switched off here because no GEMINI_API_KEY is set. The dashboards still work; to enable chat, add a key as described in .env.example."
 
     try:
         # Generate comprehensive data summary
