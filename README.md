@@ -13,7 +13,7 @@
 
 GrowthScope is my first vibe-coded app, built at my first hackathon: the ANU Entrepreneurship Club Hackathon in September 2025, over one weekend, with a team of four.
 
-I had come to computing from the automobile world, and this was the first time I tried what people were starting to call vibe coding. We started in Replit, leaned on Claude and Gemini for almost everything, and I remember being genuinely surprised at how far a few people with AI tools could get in 48 hours. A working product, from people who had never shipped one.
+I came to computing through Automobile Engineering, and this was the first time I tried what people were starting to call vibe coding. We started in Replit, leaned on Claude and Gemini for almost everything, and I remember being genuinely surprised at how far a few people with AI tools could get in 48 hours: a working product, in a weekend.
 
 It is also very much a first project. The hackathon version kept everything in one 1,300-line file, had no tests, shipped with an API key in the source, and quietly dropped more than half the rows of its own demo data. I have left that history intact on purpose. **I keep this repository as my benchmark: the place I started, so I can measure everything after it against it.**
 
@@ -137,4 +137,4 @@ scripts/check.sh           # lint, tests, secret scan, boot check
 
 ## Acknowledgments
 
-The ANU Entrepreneurship Club for running the hackathon and the brief that started this: *"What practical, SaaS-ready tools for Australian MSMEs can you build using low-code, no-code and generative AI?"* And Replit, Claude and Gemini, which made it possible for a first-time team to build it in a weekend.
+The ANU Entrepreneurship Club for running the hackathon and the brief that started this: *"What practical, SaaS-ready tools for Australian MSMEs can you build using low-code, no-code and generative AI?"* And Replit, Claude and Gemini, which made it possible for a first-time hackathon team to build it in a weekend.
