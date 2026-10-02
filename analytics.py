@@ -229,3 +229,76 @@ def forecast_monthly_revenue(monthly_trends, data_end=None, horizon=3):
                     for p, r in list(zip(periods, revenue))[-12:]],
         'points': points,
     }
+
+
+# --- Unusual days ---------------------------------------------------------
+
+MIN_TRADING_DAYS = 30
+WINDOW = 28
+# Iglewicz and Hoaglin's cut-off for the modified z-score: above 3.5 a value
+# is a likely outlier. The 0.6745 makes the MAD comparable to a standard
+# deviation for normally distributed data.
+Z_CUTOFF = 3.5
+MAD_SCALE = 0.6745
+# And at least this far from the usual level, so a statistically odd +12%
+# day is not raised as something to act on.
+MIN_CHANGE = 0.5
+
+
+def detect_unusual_days(df, max_results=8):
+    """Find trading days whose revenue sits far outside the usual level
+    around them, and say what drove each one.
+
+    Days without sales are not filled in as zeros: a closed Sunday is not a
+    collapse in demand. Each day is compared with the median of the
+    surrounding trading days, and the spread is measured with the median
+    absolute deviation, so the outliers being hunted cannot inflate the
+    yardstick used to find them.
+    """
+    if df is None or df.empty:
+        return {'available': False, 'reason': 'No sales data.'}
+
+    days = df.assign(Day=df['Date'].dt.normalize())
+    daily = days.groupby('Day')['Revenue'].sum().sort_index()
+    if len(daily) < MIN_TRADING_DAYS:
+        return {'available': False,
+                'reason': f'Needs at least {MIN_TRADING_DAYS} trading days; this data has {len(daily)}.'}
+
+    level = daily.rolling(WINDOW, center=True, min_periods=WINDOW // 2).median()
+    # The yardstick is the spread of the whole series around its local
+    # level. A 28-day MAD is too noisy: a run of similar days shrinks it
+    # and ordinary days start to look extreme.
+    spread = float((daily - level).abs().median()) or 1.0
+    score = MAD_SCALE * (daily - level) / spread
+    change = (daily - level) / level.replace(0, np.nan)
+    # Statistically unusual is not enough; it also has to matter to a shop.
+    unusual = (score.abs() > Z_CUTOFF) & (change.abs() >= MIN_CHANGE)
+
+    flagged = score[unusual].abs().sort_values(ascending=False).head(max_results)
+
+    results = []
+    for day in flagged.index:
+        revenue = float(daily[day])
+        typical = float(level[day])
+        on_day = days[days['Day'] == day]
+        by_product = on_day.groupby('Product')['Revenue'].sum().sort_values(ascending=False)
+        top = by_product.index[0]
+        results.append({
+            'date': day.strftime('%Y-%m-%d'),
+            'label': day.strftime('%a %d %b %Y'),
+            'revenue': round(revenue, 2),
+            'typical': round(typical, 2),
+            'change_pct': round((revenue - typical) / typical * 100, 1) if typical else None,
+            'direction': 'spike' if revenue > typical else 'dip',
+            'top_product': str(top),
+            'top_product_share': round(float(by_product.iloc[0]) / revenue * 100, 1) if revenue else 0.0,
+            'lines': int(len(on_day)),
+        })
+    results.sort(key=lambda r: r['date'])
+
+    return {
+        'available': True,
+        'days_checked': int(len(daily)),
+        'unusual_count': int(unusual.sum()),
+        'days': results,
+    }
