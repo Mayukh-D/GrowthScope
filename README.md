@@ -12,9 +12,20 @@ A comprehensive business intelligence platform designed specifically for Austral
 
 **Solution**: GrowthScope - A business intelligence platform that transforms raw sales data into actionable insights using AI, specifically designed for the unique needs of Australian small businesses.
 
+## 👥 Team
+
+Built at the **ANU Entrepreneurship Club Hackathon 2025** by Punyashree Venkatram, Rahul Sharma, Tanisha Sharma and Mayukh Das.
+
+- **Mayukh Das and Tanisha Sharma** pair-programmed most of the application together: the Flask backend and analytics engine, the five dashboards, the Gemini chat assistant, and the login, upload and mobile UI.
+- **Punyashree Venkatram** built the initial Replit prototype the app grew from.
+
+> Commit authorship in this history doesn't reflect who wrote what: we coded together on shared laptops and pushed from whichever account was logged in. This repository is maintained by [Mayukh Das](https://github.com/Mayukh-D).
+
 ## 🌐 Live Demo
 
-**Try GrowthScope now**: [https://growthscope.onrender.com](https://growthscope.onrender.com)
+> **Currently offline.** The hackathon deployment is no longer running; a new deployment is on the way. In the meantime, run it locally with the Quick Start below.
+
+The original demo was hosted at growthscope.onrender.com:
 
 - **No installation required** - Access directly from your browser
 - **Demo credentials** - Use any username/password to login
@@ -98,8 +109,8 @@ A comprehensive business intelligence platform designed specifically for Austral
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/growthscope.git
-   cd growthscope
+   git clone https://github.com/Mayukh-D/GrowthScope.git
+   cd GrowthScope
    ```
 
 2. **Create virtual environment**
@@ -113,7 +124,7 @@ A comprehensive business intelligence platform designed specifically for Austral
    pip install -r requirements.txt
    ```
 
-4. **Set up environment variables** (optional)
+4. **Set up environment variables** (needed for the AI chat assistant)
    ```bash
    export GEMINI_API_KEY="your_gemini_api_key_here"
    ```
