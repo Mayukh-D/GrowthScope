@@ -15,4 +15,4 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: GEMINI_API_KEY
-        sync: false   # optional: Render asks for it; leave blank to run without AI chat
+        sync: false   # optional, free from aistudio.google.com; leave blank to run without AI chat

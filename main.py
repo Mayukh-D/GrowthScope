@@ -7,6 +7,7 @@ import time
 import pickle
 from datetime import datetime, timedelta
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 import tempfile
 
@@ -26,6 +27,12 @@ else:
     except Exception as e:
         print(f"❌ Error initializing Gemini client: {e}")
         gemini_client = None
+
+# A model on the Gemini API's free tier. Configurable because model names
+# retire: the hackathon build asked for gemini-1.5-flash, which no longer exists.
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.5-flash-lite')
+# On a public demo every question spends shared free-tier quota.
+CHAT_QUESTIONS_PER_SESSION = int(os.environ.get('CHAT_QUESTIONS_PER_SESSION', '10'))
 
 app = Flask(__name__)
 # A fixed fallback would let anyone forge session cookies, so without a
@@ -628,7 +635,7 @@ Keep your response conversational but professional, and aim for 2-4 paragraphs m
 
         # Call Gemini API
         response = gemini_client.models.generate_content(
-            model='gemini-1.5-flash',
+            model=GEMINI_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.7,
@@ -641,6 +648,12 @@ Keep your response conversational but professional, and aim for 2-4 paragraphs m
         else:
             return "I'm sorry, I couldn't generate a response. Please try rephrasing your question."
 
+    except genai_errors.ClientError as e:
+        if e.code == 429:
+            return ("The demo's free AI quota is used up for now. Please try again later; "
+                    "the dashboards keep working in the meantime.")
+        print(f"Error calling Gemini API: {e.code} {e.status}")
+        return "Sorry, the AI assistant couldn't answer that just now. Please try again in a moment."
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
         return f"I encountered an error while processing your question: {str(e)}"
@@ -1122,16 +1135,15 @@ def chat_ask():
         if len(question) > 500:
             return jsonify({'success': False, 'error': 'Question is too long. Please keep it under 500 characters.'})
 
-        # Get insights from session
-        insights = session['current_insights']
+        asked = session.get('chat_questions', 0)
+        if asked >= CHAT_QUESTIONS_PER_SESSION:
+            return jsonify({'success': True, 'answer': (
+                f"This demo allows {CHAT_QUESTIONS_PER_SESSION} AI questions per visit, to share its free quota "
+                "fairly. Run GrowthScope locally with your own key for unlimited questions.")})
+        session['chat_questions'] = asked + 1
 
-        # Add debugging info
-        print(
-            f"📊 Chat analysis using data from: {insights.get('date_summary', {}).get('period_name', 'Unknown period')}")
-        print(
-            f"📊 Data range: {insights.get('date_summary', {}).get('start_date', 'Unknown')} to {insights.get('date_summary', {}).get('end_date', 'Unknown')}")
-        print(f"📊 Total revenue in data: ${insights.get('total_sales', 0):,.2f}")
-        print(f"❓ User question: {question}")
+        # Get insights from session. The question itself is not logged.
+        insights = session['current_insights']
 
         # Generate AI response
         answer = ask_ai_about_data(question, insights)

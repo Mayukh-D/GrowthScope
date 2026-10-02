@@ -29,7 +29,7 @@ Upload a sales export (or try a sample dataset) and GrowthScope analyses it acro
 | **Financial** | Profit and cost breakdown, transaction economics, unusual trading days, and brand and product rankings |
 | **Growth** | Product portfolio performance, revenue by category, and the products worth focusing on |
 | **Inventory** | Days of cover for each product and when to reorder, from the actual rate of sale |
-| **AI chat** | Questions about your own data in plain English, answered by Google Gemini (optional) |
+| **AI chat** | Questions about your own data in plain English, answered by Google Gemini on its free tier (optional) |
 | **Market trends** | A sketch of a regional market view, using illustrative sample figures |
 
 ### Revenue forecast that tells you how wrong it has been
@@ -102,7 +102,7 @@ python main.py
 
 Open http://localhost:5001, sign in with any username and password (it is a demo login), then upload a CSV or pick a sample dataset.
 
-The AI chat needs a Google Gemini key; everything else works without one. See [`.env.example`](.env.example):
+The AI chat needs a Google Gemini key, which is free from [Google AI Studio](https://aistudio.google.com/apikey); everything else works without one. On the free tier Google may use what is sent to it (the question and a summary of the loaded data) to improve its products, and the chat page says so. The model defaults to `gemini-3.5-flash-lite` and can be changed with `GEMINI_MODEL`; each visitor gets 10 questions per session (`CHAT_QUESTIONS_PER_SESSION`). See [`.env.example`](.env.example):
 
 ```bash
 export GEMINI_API_KEY="your key from https://aistudio.google.com/apikey"
