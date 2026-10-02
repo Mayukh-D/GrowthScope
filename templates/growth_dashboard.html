@@ -399,7 +399,7 @@
 
             {% if insights.transaction_metrics %}
             <div class="growth-card">
-                <div class="growth-value">{{ insights.transaction_metrics.total_receipts }}</div>
+                <div class="growth-value">{{ insights.transaction_metrics.total_receipts|number }}</div>
                 <div class="growth-label">Customer Transactions</div>
                 <div class="growth-insight">Total completed orders</div>
             </div>
@@ -470,8 +470,13 @@
                     </li>
                     {% endif %}
                     <li class="opportunity-item">
+                        {% if insights.transaction_metrics and insights.transaction_metrics.avg_receipt_value %}
                         <span class="opportunity-label">Average Order Value</span>
-                        <span class="opportunity-value">${{ (insights.avg_revenue_per_item)|money(0) }}</span>
+                        <span class="opportunity-value">${{ (insights.transaction_metrics.avg_receipt_value)|money(2) }}</span>
+                        {% else %}
+                        <span class="opportunity-label">Average Price per Item</span>
+                        <span class="opportunity-value">${{ (insights.avg_revenue_per_item)|money(2) }}</span>
+                        {% endif %}
                     </li>
                     <li class="opportunity-item">
                         <span class="opportunity-label">Market Coverage</span>

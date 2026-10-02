@@ -1,6 +1,8 @@
 """Render the README screenshots from a live local server.
 
-Usage: .venv/bin/python scripts/screenshots.py [output_dir]
+Usage: .venv/bin/python scripts/screenshots.py [output_dir] [--full] [--mobile]
+  --full    capture whole pages (for reviewing layout) instead of the fold
+  --mobile  use an iPhone-sized viewport
 Needs Playwright (pip install playwright) and Google Chrome; it drives the
 installed Chrome, so no browser download is required. Starts the app on a
 spare port with the supermarket demo loaded and no API key.
@@ -14,7 +16,10 @@ import urllib.request
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'docs'))
+ARGS = [a for a in sys.argv[1:] if not a.startswith('--')]
+FULL = '--full' in sys.argv
+MOBILE = '--mobile' in sys.argv
+OUT = os.path.abspath(ARGS[0] if ARGS else os.path.join(ROOT, 'docs', 'screenshots'))
 PORT = 5098
 BASE = f'http://127.0.0.1:{PORT}'
 
@@ -25,6 +30,7 @@ SHOTS = [
     ('growth', '/dashboard/growth'),
     ('inventory', '/dashboard/inventory'),
     ('trends', '/dashboard/trends'),
+    ('chat', '/dashboard/chat'),
 ]
 
 
@@ -48,7 +54,8 @@ def main():
         wait_for_server()
         with sync_playwright() as p:
             browser = p.chromium.launch(channel='chrome')
-            page = browser.new_page(viewport={'width': 1440, 'height': 900}, device_scale_factor=2)
+            viewport = {'width': 390, 'height': 844} if MOBILE else {'width': 1440, 'height': 900}
+            page = browser.new_page(viewport=viewport, device_scale_factor=2)
             page.goto(f'{BASE}/login')
             page.screenshot(path=os.path.join(OUT, 'login.png'))
             page.fill('input[name=username]', 'demo')
@@ -65,7 +72,7 @@ def main():
                 if name == 'forecast':
                     page.locator('.forecast-card').screenshot(path=os.path.join(OUT, f'{name}.png'))
                 else:
-                    page.screenshot(path=os.path.join(OUT, f'{name}.png'))
+                    page.screenshot(path=os.path.join(OUT, f'{name}.png'), full_page=FULL)
                 print('saved', name)
             browser.close()
     finally:

@@ -581,7 +581,7 @@
 
             {% if insights.transaction_metrics %}
             <div class="kpi-card">
-                <div class="kpi-value">{{ insights.transaction_metrics.total_receipts }}</div>
+                <div class="kpi-value">{{ insights.transaction_metrics.total_receipts|number }}</div>
                 <div class="kpi-label">Total Transactions</div>
                 <div class="kpi-change positive">🧾 Customer orders</div>
             </div>
@@ -605,7 +605,7 @@
             </div>
             {% else %}
             <div class="kpi-card">
-                <div class="kpi-value">{{ insights.total_quantity }}</div>
+                <div class="kpi-value">{{ insights.total_quantity|number }}</div>
                 <div class="kpi-label">Items Sold</div>
                 <div class="kpi-change positive">📦 Total units</div>
             </div>
@@ -694,7 +694,7 @@
                     {% endif %}
                 </li>
                 <li class="insight-item">
-                    <strong>Sales Volume:</strong> {{ insights.total_quantity }} units sold with average value of ${{ (insights.avg_revenue_per_item)|money(0) }} per item
+                    <strong>Sales Volume:</strong> {{ insights.total_quantity|number }} units sold with average value of ${{ (insights.avg_revenue_per_item)|money(0) }} per item
                 </li>
                 {% if insights.brand_summary|length > 1 %}
                 <li class="insight-item">

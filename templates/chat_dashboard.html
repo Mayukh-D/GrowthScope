@@ -482,12 +482,12 @@
                     </div>
                     <div class="summary-item">
                         <span class="summary-label">Products</span>
-                        <span class="summary-value">{{ insights.product_aggregates|length }}</span>
+                        <span class="summary-value">{{ (insights.product_count if insights.product_count is defined else insights.product_aggregates|length)|number }}</span>
                     </div>
                     {% if insights.transaction_metrics %}
                     <div class="summary-item">
                         <span class="summary-label">Transactions</span>
-                        <span class="summary-value">{{ insights.transaction_metrics.total_receipts }}</span>
+                        <span class="summary-value">{{ insights.transaction_metrics.total_receipts|number }}</span>
                     </div>
                     {% endif %}
                 </div>

@@ -71,6 +71,8 @@
         .badge-spike { background: #e8f8ef; color: #1e8449; }
         .badge-dip { background: #fdedec; color: #c0392b; }
         .table-scroll { overflow-x: auto; }
+        .more-brands summary { cursor: pointer; color: #667eea; font-weight: 600; margin: 15px 0; }
+        .more-brands[open] summary { margin-bottom: 20px; }
         .table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ecf0f1; }
         .table th { background: #f8f9fa; font-weight: 600; color: #2c3e50; }
@@ -205,7 +207,7 @@
                 </div>
                 <div class="profit-tier">
                     <span class="tier-label">Total Transactions</span>
-                    <span class="tier-count">{{ insights.transaction_metrics.total_receipts }}</span>
+                    <span class="tier-count">{{ insights.transaction_metrics.total_receipts|number }}</span>
                 </div>
             </div>
             {% else %}
@@ -290,9 +292,7 @@
         {% if insights.brand_summary and insights.brand_summary|length > 1 %}
         <div class="product-table">
             <h3 class="financial-title">Brand Performance Analysis</h3>
-            <div class="brand-performance">
-                {% for brand, data in insights.brand_summary.items() %}
-                    {% if brand != 'Unknown' %}
+            {% macro brand_card(brand, data) %}
                     <div class="brand-card">
                         <div class="brand-name">{{ brand }}</div>
                         <div class="brand-metrics">
@@ -309,19 +309,31 @@
                                 <div class="brand-label">Profit</div>
                             </div>
                             <div class="brand-metric">
-                                <div class="brand-value">{{ data.Quantity }}</div>
+                                <div class="brand-value">{{ data.Quantity|number }}</div>
                                 <div class="brand-label">Units</div>
                             </div>
                         </div>
                     </div>
-                    {% endif %}
-                {% endfor %}
+            {% endmacro %}
+            {% set brands = insights.brand_summary.items()|rejectattr('0', 'equalto', 'Unknown')|sort(attribute='1.Revenue', reverse=true)|list %}
+            <p class="unusual-intro">{{ brands|length }} brands, highest revenue first.</p>
+            <div class="brand-performance">
+                {% for brand, data in brands[:12] %}{{ brand_card(brand, data) }}{% endfor %}
             </div>
+            {% if brands|length > 12 %}
+            <details class="more-brands">
+                <summary>Show the other {{ brands|length - 12 }} brands</summary>
+                <div class="brand-performance">
+                    {% for brand, data in brands[12:] %}{{ brand_card(brand, data) }}{% endfor %}
+                </div>
+            </details>
+            {% endif %}
         </div>
         {% endif %}
 
         <div class="product-table">
-            <h3 class="financial-title">Product Profitability Analysis</h3>
+            <h3 class="financial-title">Top 10 Products by Revenue</h3>
+            <p class="unusual-intro">The full list is in the Product performance download on the Executive page.</p>
             {% if insights.product_aggregates and insights.product_aggregates|length > 0 %}
             <table class="table">
                 <thead>
@@ -335,7 +347,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for product in insights.product_aggregates[:10] %}
+                    {% for product in (insights.product_aggregates|sort(attribute='Revenue', reverse=true))[:10] %}
                     <tr>
                         <td><strong>{{ product.Product }}</strong></td>
                         <td>${{ (product.Revenue)|money(0) }}</td>
@@ -346,7 +358,7 @@
                         <td class="{% if product.Margin_Pct > 0 %}positive{% else %}negative{% endif %}">
                             {{ "%.1f"|format(product.Margin_Pct) }}%
                         </td>
-                        <td>{{ product.Quantity }}</td>
+                        <td>{{ product.Quantity|number }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

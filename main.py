@@ -41,6 +41,12 @@ def money(value, decimals=0):
         return value
 
 
+@app.template_filter('number')
+def number(value):
+    """13321 -> 13,321."""
+    return money(value, 0)
+
+
 # Force login for all routes except /login and static
 
 @app.before_request
@@ -93,6 +99,7 @@ def create_lightweight_insights(insights):
         'profit_margin': float(insights.get('profit_margin', 0)),
         'total_quantity': int(insights.get('total_quantity', 0)),
         'avg_revenue_per_item': float(insights.get('avg_revenue_per_item', 0)),
+        'product_count': len(insights.get('product_aggregates', [])),
         'top_selling_product': str(insights.get('top_selling_product', '')),
         'top_product_revenue': float(insights.get('top_product_revenue', 0)),
 

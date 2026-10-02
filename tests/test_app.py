@@ -63,3 +63,26 @@ def test_money_filter_adds_thousands_separators():
     assert main.money(76369.4) == '76,369'
     assert main.money(1234.5, 2) == '1,234.50'
     assert main.money('n/a') == 'n/a'
+
+
+def _page(client, name, demo='supermarket_data'):
+    client.post('/load-demo-data', data={'demo_type': demo, 'date_filter': 'all'})
+    return client.get(f'/dashboard/{name}').get_data(as_text=True)
+
+
+def test_financial_page_ranks_products_and_collapses_brands(client):
+    page = _page(client, 'financial')
+    table = page.split('Top 10 Products by Revenue')[1].split('</table>')[0]
+    assert table.index('Chicken Breast') < table.index('Beef Mince')
+    assert 'Apples' not in table  # $897 of revenue: alphabetical order used to put it first
+    assert 'Show the other 56 brands' in page
+
+
+def test_growth_page_shows_real_average_order_value(client):
+    page = _page(client, 'growth')
+    assert 'Average Order Value' in page and '$17.04' in page
+
+
+def test_chat_overview_counts_products(client):
+    page = _page(client, 'chat')
+    assert '>30<' in page.replace(' ', '').replace('\n', '')
