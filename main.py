@@ -12,6 +12,8 @@ from google import genai
 from google.genai import types
 import tempfile
 
+from analytics import parse_sales_dates
+
 # Initialize Gemini client with error handling. The key only ever comes from
 # the environment; without it the app runs and the AI chat is disabled.
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -187,7 +189,7 @@ def filter_data_by_date_range(df, date_filter, start_date=None, end_date=None):
     """Filter dataframe based on date range selection - FIXED VERSION"""
     try:
         # Convert Date column to datetime
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        df['Date'] = parse_sales_dates(df['Date'])
 
         # Remove rows with invalid dates
         df = df.dropna(subset=['Date'])
