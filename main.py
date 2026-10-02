@@ -1,4 +1,5 @@
 import os
+import secrets
 import pandas as pd
 import numpy as np
 from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
@@ -13,10 +14,11 @@ import tempfile
 import numpy as np
 from datetime import datetime, timedelta
 
-# Initialize Gemini client with error handling
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', "REDACTED_GEMINI_API_KEY")
+# Initialize Gemini client with error handling. The key only ever comes from
+# the environment; without it the app runs and the AI chat is disabled.
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
-    print("WARNING: GEMINI_API_KEY not found in environment variables!")
+    print("WARNING: GEMINI_API_KEY is not set, so the AI chat assistant is disabled. See .env.example.")
     gemini_client = None
 else:
     try:
@@ -27,7 +29,9 @@ else:
         gemini_client = None
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SESSION_SECRET', 'fallback_secret_key_for_development')
+# A fixed fallback would let anyone forge session cookies, so without a
+# configured secret each run gets a random one (sessions reset on restart).
+app.secret_key = os.environ.get('SESSION_SECRET') or secrets.token_hex(32)
 
 # Force login for all routes except /login and static
 from flask import request

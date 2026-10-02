@@ -127,7 +127,9 @@ The original demo was hosted at growthscope.onrender.com:
 4. **Set up environment variables** (needed for the AI chat assistant)
    ```bash
    export GEMINI_API_KEY="your_gemini_api_key_here"
+   export SESSION_SECRET="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
    ```
+   See `.env.example`. Without `GEMINI_API_KEY` the app still runs, minus the AI chat.
 
 5. **Run the application**
    ```bash
