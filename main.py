@@ -2,7 +2,7 @@ import os
 import secrets
 import pandas as pd
 import numpy as np
-from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
+from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, abort
 from werkzeug.utils import secure_filename
 import json
 import time
@@ -11,8 +11,6 @@ from datetime import datetime, timedelta
 from google import genai
 from google.genai import types
 import tempfile
-import numpy as np
-from datetime import datetime, timedelta
 
 # Initialize Gemini client with error handling. The key only ever comes from
 # the environment; without it the app runs and the AI chat is disabled.
@@ -34,8 +32,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SESSION_SECRET') or secrets.token_hex(32)
 
 # Force login for all routes except /login and static
-from flask import request
-
 
 @app.before_request
 def require_login_first():
@@ -1184,7 +1180,17 @@ def inventory_dashboard():
         return redirect(url_for('index'))
 
 
-# Debug routes
+# Debug routes: they expose session contents, so they only exist when
+# GROWTHSCOPE_DEBUG_ROUTES=1 is set (never in a public deployment).
+DEBUG_ROUTES_ENABLED = os.environ.get('GROWTHSCOPE_DEBUG_ROUTES') == '1'
+
+
+@app.before_request
+def hide_debug_routes():
+    if request.path.startswith('/debug/') and not DEBUG_ROUTES_ENABLED:
+        abort(404)
+
+
 @app.route('/debug/session')
 def debug_session():
     """Debug route to check session data"""
@@ -1283,70 +1289,7 @@ def refresh_chat_insights():
         return jsonify({'success': False, 'error': str(e)})
 
 
-# Create login template
-@app.route('/create-login-template')
-def create_login_template():
-    """Create a basic login template if it doesn't exist"""
-    login_html = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - GrowthScope</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 50px; }
-        .container { max-width: 400px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px; }
-        button { width: 100%; background: #667eea; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        button:hover { background: #5a6fd8; }
-        .flash-messages { margin-bottom: 20px; }
-        .flash-message { padding: 15px; background: #f8d7da; color: #721c24; border-radius: 8px; margin-bottom: 10px; }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
-        .demo-note { background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #2d5a2d; text-align: center; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>GrowthScope Login</h1>
-        <div class="demo-note">Demo Mode: Enter any username and password to login</div>
-
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for message in messages %}
-                        <div class="flash-message">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-    </div>
-</body>
-</html>"""
-
-    # Create templates directory if it doesn't exist
-    os.makedirs('templates', exist_ok=True)
-
-    # Write login template
-    with open('templates/login.html', 'w') as f:
-        f.write(login_html)
-
-    return "Login template created successfully!"
-
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Debug mode serves an interactive debugger, so it is opt-in.
+    app.run(host='0.0.0.0', port=port, debug=os.environ.get('FLASK_DEBUG') == '1')

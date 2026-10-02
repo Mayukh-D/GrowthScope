@@ -262,9 +262,11 @@ Try GrowthScope instantly with our sample datasets:
 - `GET /dashboard/inventory` - Inventory management
 - `GET /dashboard/chat` - AI chat interface
 
-### **Debugging & Monitoring**
+### **Debugging** (local only)
 - `GET /debug/session` - Session data inspection
 - `GET /debug/cleanup-session` - Session cleanup
+
+These return 404 unless `GROWTHSCOPE_DEBUG_ROUTES=1` is set, since they expose session contents.
 
 ## 📊 Business Impact for MSMEs
 
