@@ -86,3 +86,7 @@ def test_growth_page_shows_real_average_order_value(client):
 def test_chat_overview_counts_products(client):
     page = _page(client, 'chat')
     assert '>30<' in page.replace(' ', '').replace('\n', '')
+
+
+def test_market_trends_says_its_data_is_illustrative(client):
+    assert 'Illustrative sample data' in _page(client, 'trends')

@@ -312,6 +312,10 @@
         <!-- Inventory Details Table -->
         <div class="restock-table">
             <h3 class="chart-title">Inventory Status & Restock Analysis</h3>
+            <p style="color:#5d6d7e; font-size:0.9rem; margin: -8px 0 12px;">
+                Stock as at {{ inventory_data.as_of }}, the last date in your data. Days of cover is how long that stock lasts at the
+                average rate of sale; reorder dates allow a {{ inventory_data.lead_days }}-day lead time. Soonest first.
+            </p>
             {% if inventory_data and inventory_data.products %}
             <table class="table" id="inventoryTable">
                 <thead>
@@ -322,7 +326,8 @@
                         <th>Shortage</th>
                         <th>Stock Status</th>
                         <th>Next Restock</th>
-                        <th>Days Until</th>
+                        <th>Days of Cover</th>
+                        <th>Reorder In</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -348,12 +353,13 @@
                             </span>
                         </td>
                         <td>{{ product.next_restock_date }}</td>
+                        <td>{% if product.days_of_cover >= 9999 %}–{% else %}{{ product.days_of_cover|number }} days{% endif %}</td>
                         <td>
                             <span class="
                                 {% if product.days_until_restock <= 3 %}restock-urgent
                                 {% elif product.days_until_restock <= 7 %}restock-soon
                                 {% else %}restock-ok{% endif %}">
-                                {{ product.days_until_restock }} days
+                                {% if product.days_until_restock == 0 %}Now{% elif product.days_of_cover >= 9999 %}–{% else %}{{ product.days_until_restock|number }} days{% endif %}
                             </span>
                         </td>
                     </tr>
@@ -402,7 +408,10 @@
                     labels: Object.keys(stockData),
                     datasets: [{
                         data: Object.values(stockData),
-                        backgroundColor: ['#dc3545', '#ffc107', '#28a745', '#17a2b8'],
+                        // Colour by meaning, not position: red only ever means critical.
+                        backgroundColor: Object.keys(stockData).map(level => ({
+                            Critical: '#dc3545', Low: '#ffc107', Adequate: '#28a745', High: '#17a2b8'
+                        })[level] || '#adb5bd'),
                         borderWidth: 0
                     }]
                 },

@@ -660,6 +660,10 @@ def save_temp_file(file):
     return temp_file.name
 
 
+REORDER_LEAD_DAYS = 7
+INVENTORY_NO_SALES = 9999
+
+
 def analyze_inventory_data(df):
     """Analyze inventory data and calculate stock requirements and restock dates"""
     try:
@@ -713,38 +717,19 @@ def analyze_inventory_data(df):
 
         inventory_analysis['Stock_Level'] = inventory_analysis.apply(get_stock_level, axis=1)
 
-        # Calculate next restock date based on current stock and sales velocity
-        def calculate_restock_date(row):
-            if row['Avg_Monthly_Sales'] <= 0:
-                return "No sales data"
-
-            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
-
-            if days_of_stock <= 7:
-                restock_days = 3  # Urgent
-            elif days_of_stock <= 30:
-                restock_days = int(days_of_stock * 0.7)  # Restock before running out
-            else:
-                restock_days = 30  # Monthly review
-
-            restock_date = datetime.now() + timedelta(days=restock_days)
-            return restock_date.strftime('%Y-%m-%d')
-
-        def calculate_days_until_restock(row):
-            if row['Avg_Monthly_Sales'] <= 0:
-                return 999
-
-            days_of_stock = (row['Current_Stock'] / (row['Avg_Monthly_Sales'] / 30))
-
-            if days_of_stock <= 7:
-                return 3
-            elif days_of_stock <= 30:
-                return int(days_of_stock * 0.7)
-            else:
-                return 30
-
-        inventory_analysis['Next_Restock_Date'] = inventory_analysis.apply(calculate_restock_date, axis=1)
-        inventory_analysis['Days_Until_Restock'] = inventory_analysis.apply(calculate_days_until_restock, axis=1)
+        # Days of cover: how long current stock lasts at the average daily
+        # rate of sale. Reorder a week before it runs out. Counted from the
+        # last date in the data, because the stock figures are as at then.
+        as_of = df['Date'].max().normalize()
+        daily_rate = inventory_analysis['Avg_Monthly_Sales'] / 30
+        cover = (inventory_analysis['Current_Stock'] / daily_rate.replace(0, np.nan))
+        inventory_analysis['Days_Of_Cover'] = cover.round().fillna(INVENTORY_NO_SALES).astype(int)
+        inventory_analysis['Days_Until_Restock'] = (inventory_analysis['Days_Of_Cover'] - REORDER_LEAD_DAYS).clip(lower=0)
+        inventory_analysis['Next_Restock_Date'] = [
+            'No recent sales' if days >= INVENTORY_NO_SALES - REORDER_LEAD_DAYS
+            else (as_of + pd.Timedelta(days=int(days))).strftime('%Y-%m-%d')
+            for days in inventory_analysis['Days_Until_Restock']
+        ]
 
         # Calculate stock value
         inventory_analysis['Stock_Value'] = inventory_analysis['Current_Stock'] * inventory_analysis['Cost_Price']
@@ -760,7 +745,7 @@ def analyze_inventory_data(df):
 
         # Restock timeline
         restock_timeline = []
-        for days in [3, 7, 14, 30]:
+        for days in [7, 14, 30, 90]:
             count = len(inventory_analysis[inventory_analysis['Days_Until_Restock'] <= days])
             restock_timeline.append({'date': f"Next {days}d", 'count': count})
 
@@ -775,6 +760,7 @@ def analyze_inventory_data(df):
                 'stock_level': row['Stock_Level'],
                 'next_restock_date': row['Next_Restock_Date'],
                 'days_until_restock': int(row['Days_Until_Restock']),
+                'days_of_cover': int(row['Days_Of_Cover']),
                 'stock_value': float(row['Stock_Value'])
             })
 
@@ -785,7 +771,9 @@ def analyze_inventory_data(df):
             'total_stock_value': float(total_stock_value),
             'stock_distribution': stock_distribution,
             'restock_timeline': restock_timeline,
-            'products': products_list
+            'as_of': as_of.strftime('%Y-%m-%d'),
+            'lead_days': REORDER_LEAD_DAYS,
+            'products': sorted(products_list, key=lambda p: p['days_until_restock'])
         }
 
     except Exception as e:
