@@ -45,3 +45,15 @@ def test_missing_columns_are_reported(tmp_path):
     insights, error = main.analyze_sales_data(str(bad))
     assert insights is None
     assert 'Missing required columns' in error
+
+
+@pytest.mark.parametrize('target,expected', [
+    ('/dashboard/financial', '/dashboard/financial'),
+    ('https://evil.example/phish', '/home'),
+    ('//evil.example/phish', '/home'),
+    ('/\\evil.example', '/home'),
+])
+def test_login_only_redirects_within_the_app(target, expected):
+    with main.app.test_client() as c:
+        r = c.post('/login?next=' + target, data={'username': 'demo', 'password': 'demo'})
+        assert r.headers['Location'] == expected

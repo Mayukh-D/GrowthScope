@@ -793,8 +793,12 @@ def login():
         if username and password:
             session['logged_in'] = True
             session['username'] = username
-            next_url = request.args.get('next')
-            return redirect(next_url or url_for('index'))
+            next_url = request.args.get('next', '')
+            # Only follow paths within this app: an absolute or
+            # protocol-relative URL here would make the login an open redirect.
+            if not next_url.startswith('/') or next_url.startswith('//') or '\\' in next_url:
+                next_url = url_for('index')
+            return redirect(next_url)
         else:
             flash('Please enter both username and password')
 
