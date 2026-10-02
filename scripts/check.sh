@@ -23,6 +23,18 @@ if git grep -nIE 'AIza[0-9A-Za-z_-]{35}|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}
 fi
 echo "clean"
 
+step "README links"
+"$PY" - <<'PYCHECK'
+import re, os, sys
+text = open('README.md').read()
+targets = re.findall(r'!?\[[^\]]*\]\(([^)#]+)\)', text) + re.findall(r'<img src="([^"]+)"', text)
+local = [t for t in targets if not t.startswith(('http://', 'https://', 'mailto:'))]
+missing = [t for t in local if not os.path.exists(t)]
+if missing:
+    sys.exit('README links to missing files: ' + ', '.join(missing))
+print(f'{len(local)} local links ok')
+PYCHECK
+
 step "boot (no API key, production settings)"
 env -u GEMINI_API_KEY -u FLASK_DEBUG PORT="$PORT" "$PY" main.py >/tmp/growthscope-check.log 2>&1 &
 APP=$!

@@ -1,314 +1,140 @@
-# 🚀 GrowthScope
+# GrowthScope
 
-**Transform your sales data into actionable business strategies**
+**Sales analytics for Australian small businesses: upload a CSV, get dashboards, a forecast, and plain-English answers.**
 
-A comprehensive business intelligence platform designed specifically for Australian Micro, Small & Medium Enterprises (MSMEs), combining powerful analytics with AI-driven insights to help businesses make data-driven decisions.
+[![checks](https://github.com/Mayukh-D/GrowthScope/actions/workflows/tests.yml/badge.svg)](https://github.com/Mayukh-D/GrowthScope/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Flask](https://img.shields.io/badge/Flask-3-black)
+![Hackathon](https://img.shields.io/badge/ANU%20Hackathon-2025-orange)
 
-![GrowthScope Dashboard](https://img.shields.io/badge/Status-Hackathon%20Project-brightgreen) ![Python](https://img.shields.io/badge/Python-3.12-blue) ![Flask](https://img.shields.io/badge/Flask-Web%20Framework-red) ![AI](https://img.shields.io/badge/AI-Gemini%20Powered-orange)
+![Executive dashboard](docs/screenshots/executive.png)
 
-## 🏆 Hackathon Project
+## A note before you read the code
 
-**Problem Statement**: *"What practical, SaaS-ready tools for Australian MSMEs can you build using low-code, no-code and generative AI?"*
+GrowthScope is my first vibe-coded app, built at my first hackathon: the ANU Entrepreneurship Club Hackathon in September 2025, over one weekend, with a team of four.
 
-**Solution**: GrowthScope - A business intelligence platform that transforms raw sales data into actionable insights using AI, specifically designed for the unique needs of Australian small businesses.
+I had come to computing from the automobile world, and this was the first time I tried what people were starting to call vibe coding. We started in Replit, leaned on Claude and Gemini for almost everything, and I remember being genuinely surprised at how far a few people with AI tools could get in 48 hours. A working product, from people who had never shipped one.
 
-## 👥 Team
+It is also very much a first project. The hackathon version kept everything in one 1,300-line file, had no tests, shipped with an API key in the source, and quietly dropped more than half the rows of its own demo data. I have left that history intact on purpose. **I keep this repository as my benchmark: the place I started, so I can measure everything after it against it.**
+
+In October 2026 I came back to it with the habits I have built since: tests, a check that has to pass before anything is pushed, honest numbers, and fixing what the hackathon version got wrong. The [changelog below](#what-changed-since-the-hackathon) lists what that turned up.
+
+## What it does
+
+Upload a sales export (or try a sample dataset) and GrowthScope analyses it across six dashboards.
+
+| | |
+|---|---|
+| **Executive snapshot** | Revenue, profit, margin, transactions and basket size, with monthly trends and a three-month forecast |
+| **Financial** | Profit and cost breakdown, transaction economics, unusual trading days, and brand and product rankings |
+| **Growth** | Product portfolio performance, revenue by category, and the products worth focusing on |
+| **Inventory** | Days of cover for each product and when to reorder, from the actual rate of sale |
+| **AI chat** | Questions about your own data in plain English, answered by Google Gemini (optional) |
+| **Market trends** | A sketch of a regional market view, using illustrative sample figures |
+
+### Revenue forecast that tells you how wrong it has been
+
+![Revenue forecast](docs/screenshots/forecast.png)
+
+A trend line (with month-of-year seasonality once there are two years of data) projects the next three months with 80% ranges. Before showing anything, the model is refitted without the last three known months and scored on them, and the dashboard reports that error and a confidence level. When sales are too irregular to forecast, it says so instead of drawing a confident line. A month the data only partly covers is left out, so a file that ends on the 10th does not look like a crash.
+
+### Unusual days, and what drove them
+
+![Unusual days](docs/screenshots/unusual-days.png)
+
+Each trading day is compared with the usual level around it. A day is flagged only when it is statistically extreme (a modified z-score above 3.5) and at least 50% away from normal, which matters for a shop. On 200 series of ordinary random sales this raises no false alarms, and it catches every 2.6× spike.
+
+### Bring your own export
+
+Headers do not have to match a template. `Transaction Date`, `Order ID`, `Item`, `Qty`, `Unit Price` and `Unit Cost` from a Square or Excel export all map automatically, prices like `$1,299.00` are read as numbers, and Australian day-first dates (`02/01/2023` is 2 January) are read correctly. The dashboard tells you what it matched and how many rows, if any, it had to skip.
+
+### Reports
+
+Download the selected period as CSV: a monthly summary with the forecast months appended, and every product ranked by revenue with profit, margin and share.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/financial.png" alt="Financial dashboard"></td>
+    <td width="50%"><img src="docs/screenshots/growth.png" alt="Growth dashboard"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/inventory.png" alt="Inventory dashboard"></td>
+    <td width="50%"><img src="docs/screenshots/upload.png" alt="Upload page"></td>
+  </tr>
+</table>
+
+## What changed since the hackathon
+
+Everything below was found by testing the app properly or looking at every page, then fixed with a test so it stays fixed.
+
+**Bugs the hackathon version had**
+- **It analysed only 41% of its own demo data.** Australian dates like `25/01/2023` failed to parse as month-first and were silently dropped; 1,840 of 4,483 supermarket rows were used, and those landed in the wrong months.
+- **An API key was hard-coded in the source** (now scrubbed from this history), and the session secret defaulted to a public string.
+- **Any signed-in visitor could overwrite the login page** through a leftover `/create-login-template` route. Debug routes exposed session data, and Flask's interactive debugger was on.
+- **The login page would redirect to any website** given in its `next` parameter.
+- **Tables were alphabetical, not ranked.** The "top products" table showed Apples ($897) and skipped bigger sellers, and the financial page listed all 68 brands.
+- **"Average Order Value" was the average price per item** ($6 instead of $17.04), the chat overview said 0 products, and money had no thousands separators.
+- **Every inventory item was told to restock in exactly 30 days**, counted from today rather than from the data, and "High" stock was coloured alarm red.
+- **The chat page had no menu on phones**, and "Upload New Data" went back to the login form.
+
+**New**
+- The revenue forecast, unusual-day detection, flexible column mapping and CSV reports described above.
+- 53 tests, and a check (`scripts/check.sh`) that lints, tests, scans for committed secrets and boots the app. It runs before every push and in CI.
+
+## Team
 
 Built at the **ANU Entrepreneurship Club Hackathon 2025** by Punyashree Venkatram, Rahul Sharma, Tanisha Sharma and Mayukh Das.
 
-- **Mayukh Das and Tanisha Sharma** pair-programmed most of the application together: the Flask backend and analytics engine, the five dashboards, the Gemini chat assistant, and the login, upload and mobile UI.
-- **Punyashree Venkatram** built the initial Replit prototype the app grew from.
+- **Mayukh Das and Tanisha Sharma** pair-programmed most of the original app together: the Flask backend and analytics, the dashboards, the Gemini assistant, and the login, upload and mobile UI.
+- **Punyashree Venkatram** built the initial Replit prototype it grew from.
 
-> Commit authorship in this history doesn't reflect who wrote what: we coded together on shared laptops and pushed from whichever account was logged in. This repository is maintained by [Mayukh Das](https://github.com/Mayukh-D).
+> Commit authorship in the 2025 history does not reflect who wrote what: we coded together on shared laptops and pushed from whichever account was signed in. The October 2026 revisit is mine. This repository is maintained by [Mayukh Das](https://github.com/Mayukh-D).
 
-## 🌐 Live Demo
+## Run it
 
-> **Currently offline.** The hackathon deployment is no longer running; a new deployment is on the way. In the meantime, run it locally with the Quick Start below.
+```bash
+git clone https://github.com/Mayukh-D/GrowthScope.git
+cd GrowthScope
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
 
-The original demo was hosted at growthscope.onrender.com:
+Open http://localhost:5001, sign in with any username and password (it is a demo login), then upload a CSV or pick a sample dataset.
 
-- **No installation required** - Access directly from your browser
-- **Demo credentials** - Use any username/password to login
-- **Sample data included** - Try the Fashion or Supermarket datasets
-- **Full functionality** - All features available including AI chat assistant
+The AI chat needs a Google Gemini key; everything else works without one. See [`.env.example`](.env.example):
 
-*Note: First load may take 30-60 seconds as the server starts up*
+```bash
+export GEMINI_API_KEY="your key from https://aistudio.google.com/apikey"
+export SESSION_SECRET="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+```
 
-## 🎨 Screenshots
+### Data format
 
-### Home Page
-![Financial Dashboard](docs/home-page.png)
+One row per line item. Required: a **date**, **product**, **quantity**, **selling price** and **cost price**. Optional: **receipt ID** (unlocks per-order metrics), **brand**, **category**, and **stock on hand** (enables the inventory page). Common header variants are recognised; the canonical names are:
 
-*Home page of GrowthScope Application*
-
-### Executive Dashboard
-![Executive Dashboard](docs/executive-snapshot.png)
-
-*Real-time KPIs and business health monitoring*
-
-### AI Chat Assistant
-![AI Chat](docs/ai-chatbot.png)
-
-*Natural language business intelligence queries*
-
-## ✨ Key Features
-
-### 📊 **Multi-Dashboard Analytics**
-- **Executive Snapshot**: High-level KPIs and business health at a glance
-- **Financial Deep-Dive**: Revenue, costs, profitability analysis with trend charts
-- **Growth Intelligence**: Customer insights and expansion opportunities
-- **Market Trends**: Regional market data and seasonal insights for Australian businesses
-- **Inventory Management**: Stock optimization and reorder recommendations
-
-### 🤖 **AI-Powered Chat Assistant**
-- Ask natural language questions about your business data
-- Get instant insights powered by Google Gemini AI
-- Contextual responses based on your specific business metrics
-- Strategic recommendations and actionable advice
-
-### 📈 **Smart Analytics Engine**
-- Automated profit margin analysis and product performance ranking
-- Monthly trend analysis with predictive insights
-- Brand and category performance comparison
-- Transaction-level analytics for customer behavior insights
-- Inventory optimization with restock date predictions
-
-### 🇦🇺 **Australia-Focused Features**
-- Regional market data for major Australian cities
-- Currency formatting in AUD
-- Market trends specific to Australian retail landscape
-- Designed for Australian business compliance and reporting needs
-
-## 🛠️ Technology Stack
-
-### **Backend**
-- **Python 3.12** - Core application logic
-- **Flask** - Lightweight web framework
-- **Pandas & NumPy** - Data processing and analytics
-- **Google Gemini AI** - Natural language processing and insights
-
-### **Frontend**
-- **HTML5/CSS3** - Modern responsive design
-- **JavaScript** - Interactive dashboards
-- **Chart.js** - Beautiful data visualizations
-- **Mobile-responsive** - Works on all devices
-
-### **Data Processing**
-- **CSV file support** - Easy data import
-- **Real-time analysis** - Instant insights upon upload
-- **Date range filtering** - Flexible time period analysis
-- **Multi-format support** - Various CSV structures supported
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.12 or higher
-- Google Gemini API key (optional for AI features)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Mayukh-D/GrowthScope.git
-   cd GrowthScope
-   ```
-
-2. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set up environment variables** (needed for the AI chat assistant)
-   ```bash
-   export GEMINI_API_KEY="your_gemini_api_key_here"
-   export SESSION_SECRET="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
-   ```
-   See `.env.example`. Without `GEMINI_API_KEY` the app still runs, minus the AI chat.
-
-5. **Run the application**
-   ```bash
-   python main.py
-   ```
-
-6. **Access the platform**
-   - Open your browser to `http://localhost:5001`
-   - Login with any username/password (demo mode)
-   - Upload your sales data or try the demo datasets
-
-## 📋 Data Format Requirements
-
-GrowthScope supports CSV files with the following structure:
-
-### **Standard Format**
 ```csv
 Date,Receipt_ID,Product_Name,Brand_Name,Category,Quantity,Selling_Price,Cost_Price,Stock_For_Month
 2024-01-15,RCP001,Wireless Headphones,TechBrand,Electronics,2,149.99,89.99,45
 ```
 
-### **Required Columns**
-- `Date` - Transaction date. ISO (`2024-01-15`) or Australian day-first (`15/01/2024`)
-- `Product_Name` - Product name
-- `Quantity` - Number of items sold
-- `Selling_Price` - Price per unit sold
-- `Cost_Price` - Cost per unit
+## Develop
 
-### **Optional Columns**
-- `Receipt_ID` - Unlocks per-receipt metrics
-- `Brand_Name`, `Category` - Shown as Unknown / Uncategorised when absent
-- `Stock_For_Month` - Enables inventory analysis
+```bash
+pip install -r requirements-dev.txt
+scripts/install-hooks.sh   # run the checks before every git push
+scripts/check.sh           # lint, tests, secret scan, boot check
+```
 
-### **Bring your own export**
-Headers don't need to match exactly. Common variants are recognised, so a Square or Excel export with `Transaction Date`, `Order ID`, `Item`, `Qty`, `Unit Price` and `Unit Cost` works as-is, and prices written as `$1,299.00` are read as numbers. The dashboard shows which columns were matched and how many rows, if any, were skipped for a missing or unreadable quantity or price.
+`scripts/screenshots.py` renders these screenshots from a live local server with Playwright and your installed Chrome (`--full` for whole pages, `--mobile` for a phone viewport). New analytics live in `analytics.py` as plain functions, so they can be tested without a running app.
 
-## 🎯 Use Cases for Australian MSMEs
+## Known limits
 
-### **Retail Businesses**
-- Track product performance across different brands
-- Optimize inventory levels for seasonal demand
-- Identify top-performing product categories
-- Monitor profit margins and pricing strategies
+- **The login is a demo.** Any username and password works; there are no accounts.
+- **Market Trends uses fixed sample figures**, and the page says so.
+- **Uploaded files live on the server's disk** for the session; it is not built for many users at once.
+- **The forecast is deliberately simple.** It is a trend and seasonality model, and it reports its own error so you can judge it.
 
-### **E-commerce Stores**
-- Analyze customer purchasing patterns
-- Optimize product mix for maximum profitability
-- Track monthly growth trends
-- Identify opportunities for cross-selling
+## Acknowledgments
 
-### **Service Businesses**
-- Monitor service package performance
-- Track customer retention and repeat business
-- Analyze seasonal service demand patterns
-- Optimize pricing strategies
-
-### **Food & Beverage**
-- Track menu item popularity and profitability
-- Manage inventory for perishable goods
-- Analyze seasonal demand patterns
-- Optimize supplier relationships
-
-## 🔧 Features Deep Dive
-
-### **Executive Dashboard**
-- Real-time KPI monitoring
-- Profit margin health checks
-- Top product performance
-- Monthly revenue trends with forecasting
-
-### **Financial Analysis**
-- Detailed P&L breakdown
-- Cost analysis and optimization opportunities
-- Brand and category profitability comparison
-- Transaction-level financial metrics
-
-### **Growth Intelligence**
-- Customer behavior analysis
-- Market expansion opportunities
-- Product portfolio optimization
-- Revenue growth strategies
-
-### **AI Chat Assistant**
-- Natural language business queries
-- Contextual data interpretation
-- Strategic recommendations
-- Instant metric calculations
-
-### **Market Trends (Australia Focus)**
-- Regional market data for major cities
-- Seasonal trend analysis
-- Industry benchmarking
-- Local market insights
-
-## 🏗️ SaaS-Ready Architecture
-
-### **Scalability Features**
-- Session-based data processing
-- Optimized memory usage
-- Lightweight data storage
-- Mobile-responsive design
-
-### **Security & Privacy**
-- Local data processing (no data sent to external servers except AI queries)
-- Session-based authentication
-- Secure file handling
-- Data privacy compliance ready
-
-### **Deployment Ready**
-- Environment variable configuration
-- Production-ready Flask setup
-- Error handling and logging
-- Health check endpoints
-
-## 🧪 Demo Data
-
-Try GrowthScope instantly with our sample datasets:
-
-1. **Fashion Dataset** - 100 products across clothing and accessories
-2. **Supermarket Dataset** - 4000+ transactions across various product categories
-
-## 🔍 API Endpoints
-
-### **Data Management**
-- `POST /home` - Upload CSV data
-- `POST /load-demo-data` - Load sample datasets
-- `GET /api/refresh-chat-insights` - Refresh AI chat context
-
-### **Dashboards**
-- `GET /dashboard/executive` - Executive overview
-- `GET /dashboard/financial` - Financial analysis
-- `GET /dashboard/growth` - Growth opportunities
-- `GET /dashboard/trends` - Market trends
-- `GET /dashboard/inventory` - Inventory management
-- `GET /dashboard/chat` - AI chat interface
-
-### **Debugging** (local only)
-- `GET /debug/session` - Session data inspection
-- `GET /debug/cleanup-session` - Session cleanup
-
-These return 404 unless `GROWTHSCOPE_DEBUG_ROUTES=1` is set, since they expose session contents.
-
-## 📊 Business Impact for MSMEs
-
-### **Time Savings**
-- **90% reduction** in manual data analysis time
-- **Instant insights** from raw sales data
-- **Automated reporting** eliminating manual spreadsheet work
-
-### **Decision Making**
-- **Data-driven strategies** replacing gut-feel decisions
-- **Real-time performance monitoring** for quick pivots
-- **AI-powered recommendations** for growth opportunities
-
-### **Cost Optimization**
-- **Inventory optimization** reducing carrying costs
-- **Profit margin analysis** identifying pricing opportunities
-- **Supplier performance** tracking for better negotiations
-
-### **Revenue Growth**
-- **Product mix optimization** for higher profitability
-- **Customer behavior insights** for targeted marketing
-- **Seasonal trend analysis** for demand planning
-
-### **Areas for Contribution**
-- Additional data connectors (Shopify, Square, Xero integration)
-- More Australian market data sources
-- Advanced ML models for forecasting
-- Mobile app development
-- Additional visualization components
-
-## 🙏 Acknowledgments
-
-- **Google Gemini AI** for powering our intelligent chat assistant
-- **ANU Entrepreneurship Club** for organizing this hackathon and giving us this amazing opportunity to build solutions for Australian businesses
-- **Open Source Community** for the amazing tools and libraries
-
----
-
-**Built with ❤️ for Australian MSMEs**
-
-*GrowthScope - Where Data Meets Growth*
+The ANU Entrepreneurship Club for running the hackathon and the brief that started this: *"What practical, SaaS-ready tools for Australian MSMEs can you build using low-code, no-code and generative AI?"* And Replit, Claude and Gemini, which made it possible for a first-time team to build it in a weekend.

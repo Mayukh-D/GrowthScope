@@ -27,6 +27,7 @@ SHOTS = [
     ('executive', '/dashboard/executive'),
     ('forecast', '/dashboard/executive#forecast'),
     ('financial', '/dashboard/financial'),
+    ('unusual-days', '/dashboard/financial#unusual'),
     ('growth', '/dashboard/growth'),
     ('inventory', '/dashboard/inventory'),
     ('trends', '/dashboard/trends'),
@@ -71,6 +72,8 @@ def main():
                 page.wait_for_timeout(1200)  # let Chart.js finish animating
                 if name == 'forecast':
                     page.locator('.forecast-card').screenshot(path=os.path.join(OUT, f'{name}.png'))
+                elif name == 'unusual-days':
+                    page.locator('.product-table', has_text='Unusual Days').screenshot(path=os.path.join(OUT, f'{name}.png'))
                 else:
                     page.screenshot(path=os.path.join(OUT, f'{name}.png'), full_page=FULL)
                 print('saved', name)
