@@ -172,6 +172,32 @@
             display: inline-block;
         }
 
+        .downloads {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .download-link {
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: 1px solid #667eea;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .download-link:hover {
+            background: #667eea;
+            color: white;
+        }
+
         .data-report {
             margin-top: 12px;
             padding: 10px 16px;
@@ -510,6 +536,13 @@
             {% if insights and insights.date_summary %}
                 <div class="period-indicator">
                     📅 {{ insights.date_summary.period_name }} | {{ insights.date_summary.start_date }} to {{ insights.date_summary.end_date }}
+                </div>
+            {% endif %}
+            {% if insights %}
+                <div class="downloads">
+                    Download this period:
+                    <a class="download-link" href="{{ url_for('download_report', kind='monthly') }}">⬇ Monthly summary (CSV)</a>
+                    <a class="download-link" href="{{ url_for('download_report', kind='products') }}">⬇ Product performance (CSV)</a>
                 </div>
             {% endif %}
             {% set report = insights.data_report if insights else None %}

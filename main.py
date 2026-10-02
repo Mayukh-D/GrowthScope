@@ -2,7 +2,7 @@ import os
 import secrets
 import pandas as pd
 import numpy as np
-from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, abort
+from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, abort, Response
 import time
 import pickle
 from datetime import datetime, timedelta
@@ -10,7 +10,8 @@ from google import genai
 from google.genai import types
 import tempfile
 
-from analytics import detect_unusual_days, forecast_monthly_revenue, normalise_sales_frame, parse_sales_dates
+from analytics import (detect_unusual_days, forecast_monthly_revenue, monthly_report, normalise_sales_frame,
+                       parse_sales_dates, product_report)
 
 # Initialize Gemini client with error handling. The key only ever comes from
 # the environment; without it the app runs and the AI chat is disabled.
@@ -1178,6 +1179,29 @@ def inventory_dashboard():
         print(f"Error in inventory_dashboard: {e}")
         flash(f'Error loading inventory dashboard: {str(e)}')
         return redirect(url_for('index'))
+
+
+REPORTS = {'monthly': monthly_report, 'products': product_report}
+
+
+@app.route('/report/<kind>.csv')
+def download_report(kind):
+    """The current analysis, respecting the selected date range, as CSV."""
+    if kind not in REPORTS:
+        abort(404)
+    csv_path = session.get('csv_file_path')
+    if not csv_path or not os.path.exists(csv_path):
+        flash('Please upload a CSV file first')
+        return redirect(url_for('index'))
+    insights, error = analyze_sales_data(csv_path, session.get('date_filter', 'all'),
+                                         session.get('start_date'), session.get('end_date'))
+    if error:
+        flash(f'Error analyzing data: {error}')
+        return redirect(url_for('index'))
+    table = REPORTS[kind](insights)
+    filename = f"growthscope-{kind}-{insights['date_summary'].get('start_date', '')}-to-{insights['date_summary'].get('end_date', '')}.csv"
+    return Response(table.to_csv(index=False), mimetype='text/csv',
+                    headers={'Content-Disposition': f'attachment; filename="{filename}"'})
 
 
 # Debug routes: they expose session contents, so they only exist when

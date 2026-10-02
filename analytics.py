@@ -302,3 +302,48 @@ def detect_unusual_days(df, max_results=8):
         'unusual_count': int(unusual.sum()),
         'days': results,
     }
+
+
+# --- Reports --------------------------------------------------------------
+
+def monthly_report(insights):
+    """Monthly figures as a table, with forecast months appended and
+    marked, ready to open in Excel."""
+    rows = [{
+        'Month': m['Month_str'],
+        'Type': 'Actual',
+        'Revenue': round(m['Revenue'], 2),
+        'Cost': round(m['Cost'], 2),
+        'Profit': round(m['Profit'], 2),
+        'Margin %': round(m['Profit'] / m['Revenue'] * 100, 1) if m['Revenue'] else 0.0,
+        'Units': int(m['Quantity']),
+        'Forecast low': None,
+        'Forecast high': None,
+    } for m in insights.get('monthly_trends', [])]
+    forecast = insights.get('forecast') or {}
+    for p in forecast.get('points', []) if forecast.get('available') else []:
+        rows.append({'Month': p['month'], 'Type': 'Forecast', 'Revenue': p['revenue'],
+                     'Cost': None, 'Profit': None, 'Margin %': None, 'Units': None,
+                     'Forecast low': p['low'], 'Forecast high': p['high']})
+    return pd.DataFrame(rows, columns=['Month', 'Type', 'Revenue', 'Cost', 'Profit', 'Margin %', 'Units',
+                                       'Forecast low', 'Forecast high'])
+
+
+def product_report(insights):
+    """Every product ranked by revenue, with profit, margin and share."""
+    products = pd.DataFrame(insights.get('product_aggregates', []))
+    if products.empty:
+        return pd.DataFrame(columns=['Rank', 'Product', 'Revenue', 'Cost', 'Profit', 'Margin %', 'Units',
+                                     'Share of revenue %'])
+    products = products.sort_values('Revenue', ascending=False).reset_index(drop=True)
+    total = products['Revenue'].sum()
+    return pd.DataFrame({
+        'Rank': range(1, len(products) + 1),
+        'Product': products['Product'],
+        'Revenue': products['Revenue'].round(2),
+        'Cost': products['Cost'].round(2),
+        'Profit': products['Profit'].round(2),
+        'Margin %': products['Margin_Pct'].round(1),
+        'Units': products['Quantity'].astype(int),
+        'Share of revenue %': (products['Revenue'] / total * 100).round(1) if total else 0.0,
+    })
