@@ -3,8 +3,6 @@ import secrets
 import pandas as pd
 import numpy as np
 from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify, abort
-from werkzeug.utils import secure_filename
-import json
 import time
 import pickle
 from datetime import datetime, timedelta
@@ -559,13 +557,13 @@ Transaction Analytics:
 
     # Add top products
     if insights.get('top_products'):
-        summary += f"\nTop Products by Profit:\n"
+        summary += "\nTop Products by Profit:\n"
         for i, product in enumerate(insights['top_products'], 1):
             summary += f"{i}. {product['Product']}: ${product['Profit']:,.0f} profit, {product['Margin_Pct']:.1f}% margin\n"
 
     # Add brand/category info if available
     if insights.get('brand_summary'):
-        summary += f"\nTop Brands:\n"
+        summary += "\nTop Brands:\n"
         for brand, data in insights['brand_summary'].items():
             if brand != 'Unknown':
                 summary += f"- {brand}: ${data['Revenue']:,.0f} revenue, {data['Margin']:.1f}% margin\n"
@@ -741,7 +739,6 @@ def analyze_inventory_data(df):
         restock_timeline = []
         for days in [3, 7, 14, 30]:
             count = len(inventory_analysis[inventory_analysis['Days_Until_Restock'] <= days])
-            date = (datetime.now() + timedelta(days=days)).strftime('%m/%d')
             restock_timeline.append({'date': f"Next {days}d", 'count': count})
 
         # Convert to list of dictionaries for template
@@ -1055,7 +1052,7 @@ def chat_dashboard():
         # Try to use existing session insights first
         if 'current_insights' in session:
             template_insights = session['current_insights']
-            print(f"📊 Using cached insights for chat dashboard")
+            print("📊 Using cached insights for chat dashboard")
         else:
             # Fallback to analyzing data fresh
             insights, error = analyze_sales_data(
