@@ -3,6 +3,7 @@ without a Flask app or a session."""
 
 import warnings
 
+import numpy as np
 import pandas as pd
 
 
@@ -120,3 +121,111 @@ def normalise_sales_frame(df):
         'rows_used': len(df),
     }
     return df, report, None
+
+
+# --- Revenue forecast -----------------------------------------------------
+
+MIN_MONTHS_FOR_FORECAST = 6
+SEASONAL_MONTHS = 24
+# z for a central 80% interval. Ranges that wide are honest for small-shop
+# data; a 95% band would mostly say "anything could happen".
+Z80 = 1.2816
+
+
+def _fit(values, months, seasonal):
+    """Linear trend, optionally times a month-of-year index. Returns a
+    predict(i, month_of_year) function."""
+    x = np.arange(len(values), dtype=float)
+    y = np.asarray(values, dtype=float)
+    index = {m: 1.0 for m in range(1, 13)}
+    if seasonal:
+        slope, intercept = np.polyfit(x, y, 1)
+        trend = np.maximum(slope * x + intercept, 1e-9)
+        ratios = {}
+        for m, actual, base in zip(months, y, trend):
+            ratios.setdefault(m, []).append(actual / base)
+        raw = {m: float(np.mean(r)) for m, r in ratios.items()}
+        mean = float(np.mean(list(raw.values())))
+        index.update({m: r / mean for m, r in raw.items()})
+        y = y / np.array([index[m] for m in months])
+    slope, intercept = np.polyfit(x, y, 1)
+    return lambda i, m: max((slope * i + intercept) * index[m], 0.0)
+
+
+def forecast_monthly_revenue(monthly_trends, data_end=None, horizon=3):
+    """Project monthly revenue `horizon` months ahead.
+
+    `monthly_trends` is the app's list of {'Month_str': 'YYYY-MM',
+    'Revenue': ...}. A final month the data does not cover to its end is
+    left out of the fit, so a file ending on the 10th does not read as a
+    crash. Returns None, with a reason, when there is too little history.
+
+    The result carries its own track record: the model is refitted without
+    the last three known months and scored on them (mean absolute
+    percentage error), so the dashboard can say how far off it has been.
+    """
+    if not monthly_trends:
+        return {'available': False, 'reason': 'No monthly data.'}
+
+    periods = [pd.Period(m['Month_str'], 'M') for m in monthly_trends]
+    revenue = [float(m['Revenue']) for m in monthly_trends]
+    order = np.argsort([p.ordinal for p in periods])
+    periods = [periods[i] for i in order]
+    revenue = [revenue[i] for i in order]
+
+    excluded = None
+    if data_end is not None:
+        end = pd.Timestamp(data_end)
+        last = periods[-1]
+        if end.to_period('M') == last and end.day < last.days_in_month - 2:
+            excluded = last.strftime('%b %Y')
+            periods, revenue = periods[:-1], revenue[:-1]
+
+    if len(revenue) < MIN_MONTHS_FOR_FORECAST:
+        return {'available': False,
+                'reason': f'Needs at least {MIN_MONTHS_FOR_FORECAST} complete months of data; this file has {len(revenue)}.'}
+
+    months = [p.month for p in periods]
+    seasonal = len(revenue) >= SEASONAL_MONTHS
+    predict = _fit(revenue, months, seasonal)
+    n = len(revenue)
+
+    fitted = np.array([predict(i, m) for i, m in enumerate(months)])
+    residual_sd = float(np.std(np.array(revenue) - fitted, ddof=1)) if n > 2 else 0.0
+
+    points = []
+    for h in range(1, horizon + 1):
+        period = periods[-1] + h
+        value = predict(n - 1 + h, period.month)
+        spread = Z80 * residual_sd * np.sqrt(1 + h / n)
+        points.append({
+            'month': period.strftime('%Y-%m'),
+            'label': period.strftime('%b %Y'),
+            'revenue': round(float(value), 2),
+            'low': round(float(max(value - spread, 0.0)), 2),
+            'high': round(float(value + spread), 2),
+        })
+
+    backtest_error = None
+    if n >= MIN_MONTHS_FOR_FORECAST + 3:
+        held_predict = _fit(revenue[:-3], months[:-3], len(revenue) - 3 >= SEASONAL_MONTHS)
+        errors = [abs(held_predict(n - 4 + h, months[n - 4 + h]) - revenue[n - 4 + h]) / revenue[n - 4 + h]
+                  for h in range(1, 4) if revenue[n - 4 + h] > 0]
+        if errors:
+            backtest_error = round(float(np.mean(errors)) * 100, 1)
+
+    # Above this, the track record says the line is closer to noise than
+    # signal, and the dashboard says so instead of drawing it confidently.
+    confidence = 'low' if backtest_error is None or backtest_error > 35 else 'high' if backtest_error <= 15 else 'medium'
+
+    return {
+        'available': True,
+        'confidence': confidence,
+        'method': 'Trend with seasonality' if seasonal else 'Linear trend',
+        'months_used': n,
+        'excluded_partial_month': excluded,
+        'backtest_error_pct': backtest_error,
+        'history': [{'label': p.strftime('%b %Y'), 'revenue': round(float(r), 2)}
+                    for p, r in list(zip(periods, revenue))[-12:]],
+        'points': points,
+    }

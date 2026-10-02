@@ -10,7 +10,7 @@ from google import genai
 from google.genai import types
 import tempfile
 
-from analytics import normalise_sales_frame, parse_sales_dates
+from analytics import forecast_monthly_revenue, normalise_sales_frame, parse_sales_dates
 
 # Initialize Gemini client with error handling. The key only ever comes from
 # the environment; without it the app runs and the AI chat is disabled.
@@ -508,6 +508,9 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             'product_aggregates': convert_numpy_types(product_agg.to_dict('records')) if not product_agg.empty else [],
             'brand_summary': brand_summary,
             'category_summary': category_summary,
+
+            # Next three months of revenue, with its own track record
+            'forecast': forecast_monthly_revenue(monthly_trends, df['Date'].max()),
 
             # What the upload check matched, filled in and dropped
             'data_report': data_report,
