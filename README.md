@@ -152,15 +152,19 @@ Date,Receipt_ID,Product_Name,Brand_Name,Category,Quantity,Selling_Price,Cost_Pri
 ```
 
 ### **Required Columns**
-- `Date` - Transaction date (YYYY-MM-DD format)
-- `Receipt_ID` - Unique transaction identifier
+- `Date` - Transaction date. ISO (`2024-01-15`) or Australian day-first (`15/01/2024`)
 - `Product_Name` - Product name
-- `Brand_Name` - Brand name
-- `Category` - Product category
 - `Quantity` - Number of items sold
 - `Selling_Price` - Price per unit sold
 - `Cost_Price` - Cost per unit
-- `Stock_For_Month` - Current stock level (optional, for inventory analysis)
+
+### **Optional Columns**
+- `Receipt_ID` - Unlocks per-receipt metrics
+- `Brand_Name`, `Category` - Shown as Unknown / Uncategorised when absent
+- `Stock_For_Month` - Enables inventory analysis
+
+### **Bring your own export**
+Headers don't need to match exactly. Common variants are recognised, so a Square or Excel export with `Transaction Date`, `Order ID`, `Item`, `Qty`, `Unit Price` and `Unit Cost` works as-is, and prices written as `$1,299.00` are read as numbers. The dashboard shows which columns were matched and how many rows, if any, were skipped for a missing or unreadable quantity or price.
 
 ## 🎯 Use Cases for Australian MSMEs
 

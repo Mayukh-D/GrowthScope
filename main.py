@@ -12,7 +12,7 @@ from google import genai
 from google.genai import types
 import tempfile
 
-from analytics import parse_sales_dates
+from analytics import normalise_sales_frame, parse_sales_dates
 
 # Initialize Gemini client with error handling. The key only ever comes from
 # the environment; without it the app runs and the AI chat is disabled.
@@ -367,34 +367,26 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
         df = pd.read_csv(csv_file_path)
         print(f"Loaded {len(df)} rows from CSV")
 
-        # Handle both old and new data formats
-        if 'Product_Name' in df.columns:
-            # New transaction-based format
-            required_columns = ['Date', 'Receipt_ID', 'Product_Name', 'Brand_Name', 'Category', 'Quantity',
-                                'Selling_Price', 'Cost_Price']
-            missing_columns = [col for col in required_columns if col not in df.columns]
-            if missing_columns:
-                return None, f"Missing required columns: {', '.join(missing_columns)}"
-
-            # Map new column names to old format
-            df['Product'] = df['Product_Name']
-            df['Brand'] = df['Brand_Name']
-            # Calculate total revenue and cost for each line item
-            df['Revenue'] = df['Selling_Price'] * df['Quantity']
-            df['Cost'] = df['Cost_Price'] * df['Quantity']
-
-        else:
-            # Old format
+        data_report = None
+        if {'Product', 'Revenue', 'Cost'} <= set(df.columns):
+            # Legacy format: Revenue and Cost are already line totals.
             required_columns = ['Date', 'Product', 'Revenue', 'Cost', 'Quantity']
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 return None, f"Missing required columns: {', '.join(missing_columns)}"
-
-            # Optional columns with defaults for old format
             if 'Brand' not in df.columns:
                 df['Brand'] = 'Unknown'
             if 'Category' not in df.columns:
                 df['Category'] = 'Unknown'
+        else:
+            # Transaction format, from any export whose headers we recognise.
+            df, data_report, error = normalise_sales_frame(df)
+            if error:
+                return None, error
+            df['Product'] = df['Product_Name']
+            df['Brand'] = df['Brand_Name']
+            df['Revenue'] = df['Selling_Price'] * df['Quantity']
+            df['Cost'] = df['Cost_Price'] * df['Quantity']
 
         # Apply date filtering
         df = filter_data_by_date_range(df, date_filter, start_date, end_date)
@@ -518,6 +510,9 @@ def analyze_sales_data(csv_file_path, date_filter='all', start_date=None, end_da
             'product_aggregates': convert_numpy_types(product_agg.to_dict('records')) if not product_agg.empty else [],
             'brand_summary': brand_summary,
             'category_summary': category_summary,
+
+            # What the upload check matched, filled in and dropped
+            'data_report': data_report,
 
             # Store raw dataframe for chat functionality
             'raw_data': df

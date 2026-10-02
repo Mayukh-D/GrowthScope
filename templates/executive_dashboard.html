@@ -172,6 +172,22 @@
             display: inline-block;
         }
 
+        .data-report {
+            margin-top: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            background: #f4f8fb;
+            border-left: 4px solid #3498db;
+            color: #34495e;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .data-report.warn {
+            border-left-color: #e67e22;
+            background: #fdf6ee;
+        }
+
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -441,6 +457,21 @@
             {% if insights and insights.date_summary %}
                 <div class="period-indicator">
                     📅 {{ insights.date_summary.period_name }} | {{ insights.date_summary.start_date }} to {{ insights.date_summary.end_date }}
+                </div>
+            {% endif %}
+            {% set report = insights.data_report if insights else None %}
+            {% if report and (report.renamed or report.filled or report.rows_dropped) %}
+                <div class="data-report{% if report.rows_dropped %} warn{% endif %}">
+                    {% if report.renamed %}
+                        🔎 Matched your columns:
+                        {% for original, canonical in report.renamed.items() %}<strong>{{ original }}</strong> → {{ canonical|replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %}.
+                    {% endif %}
+                    {% if report.filled %}
+                        No {{ report.filled|map('replace', '_', ' ')|join(' or ') }} column, so those show as Unknown.
+                    {% endif %}
+                    {% if report.rows_dropped %}
+                        ⚠️ {{ report.rows_dropped }} row{{ 's' if report.rows_dropped != 1 }} skipped for a missing or unreadable quantity or price ({{ report.rows_used }} used).
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
