@@ -2,6 +2,8 @@
 
 **Sales analytics for Australian small businesses: upload a CSV, get dashboards, a forecast, and plain-English answers.**
 
+**[Try the live demo →](https://growthscope-j85i.onrender.com)** &nbsp;Sign in with any username and password, then pick a sample dataset. It runs on a free plan, so the first visit can take up to a minute to wake up.
+
 [![checks](https://github.com/Mayukh-D/GrowthScope/actions/workflows/tests.yml/badge.svg)](https://github.com/Mayukh-D/GrowthScope/actions/workflows/tests.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![Flask](https://img.shields.io/badge/Flask-3-black)
